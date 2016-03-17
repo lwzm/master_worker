@@ -14,14 +14,14 @@ class MasterWorker(object):
     """Multiprocessing based master-worker model
     """
 
-    NUM_OF_WORKER = 4
+    NUM_OF_WORKERS = 4
     RLIMIT_CPU = 60
 
     def __init__(self):
         self.children = set()
         self.history = collections.deque(maxlen=500)
-        self.lock = multiprocessing.Lock()
         signal.signal(signal.SIGCHLD, self._sig_chld)
+        self.init()
 
     def _sig_chld(self, signum, frame):
         while True:
@@ -41,7 +41,7 @@ class MasterWorker(object):
     def run(self):
         while True:
             while True:
-                if len(self.children) < self.NUM_OF_WORKER:
+                if len(self.children) < self.NUM_OF_WORKERS:
                     break
                 time.sleep(0.1)
 
@@ -56,6 +56,9 @@ class MasterWorker(object):
                 self.history.append((
                     datetime.datetime.now(), "begin", pid,
                 ))
+
+    def init(self):
+        pass
 
     def get_command(self) -> object:
         """Just an example
