@@ -2,7 +2,6 @@
 
 import collections
 import datetime
-import multiprocessing
 import os
 import resource
 import signal
@@ -85,27 +84,17 @@ def main():
     import random
     import threading
 
-    class T(MasterWorker):
-        def get_command(self):
-            print(self.children)
-            return super().get_command()
-
-        def work(self, cmd):
-            time.sleep(random.random())
-            log(cmd)
-
-    master_worker = T()
-    # master_worker.run()
-    thd = threading.Thread(target=master_worker.run)
-    thd.start()
-
     def _term_self(signum, frame):
         os.kill(os.getpid(), signal.SIGTERM)
 
-    signal.signal(signal.SIGINT, _term_self)
+    class T(MasterWorker):
+        def work(self, cmd):
+            time.sleep(random.random())
+            exec(cmd)
 
-    while True:
-        time.sleep(0.01)
+
+    signal.signal(signal.SIGINT, _term_self)
+    T().run()
 
 
 if __name__ == "__main__":

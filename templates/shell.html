@@ -1,0 +1,14 @@
+{# vim:se filetype=html.tornadotmpl: #}
+
+<link rel="stylesheet" href="{{ static_url("shell.css") }}">
+<script src="//cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
+<script src="//cdn.bootcss.com/coffee-script/1.6.3/coffee-script.min.js"></script>
+<script src="{{ static_url("shell.coffee") }}" type="text/coffeescript"></script>
+
+<pre id="output">
+</pre>
+
+<form id="submit">
+    <span id="prompt">&gt;&gt;&gt; </span>
+    <input type="text" id="input">
+</form>
