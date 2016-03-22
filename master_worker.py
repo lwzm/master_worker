@@ -54,6 +54,8 @@ class MasterWorker(object):
             cmd = self.get_command()
             pid = os.fork()
             if pid == 0:  # child
+                signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+                signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 resource.setrlimit(resource.RLIMIT_CPU, (self.RLIMIT_CPU, -1))
                 self.work(cmd)
                 sys.exit()

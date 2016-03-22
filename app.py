@@ -11,7 +11,6 @@ import web
 class T(master_worker.MasterWorker):
     NUM_OF_WORKERS = 32
     def work(self, cmd):
-        time.sleep(10)
         exec(cmd)
 
 
