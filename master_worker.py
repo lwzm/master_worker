@@ -10,7 +10,7 @@ import time
 
 
 class MasterWorker(object):
-    """Multiprocessing based master-worker model
+    """Multiprocessing based master-worker model. Singleton(lock todo)
     """
 
     NUM_OF_WORKERS = 4
@@ -20,6 +20,7 @@ class MasterWorker(object):
         self.children = set()
         self.history = collections.deque(maxlen=500)
         signal.signal(signal.SIGCHLD, self._sig_chld)
+        signal.signal(signal.SIGTERM, self._sig_term)
         self.init()
 
     def _sig_chld(self, signum, frame):
@@ -36,6 +37,12 @@ class MasterWorker(object):
                 ))
             except ChildProcessError:
                 break
+
+    def _sig_term(self, signum, frame):
+        while self.children:
+            pid, status = os.wait()
+            self.children.discard(pid)
+        sys.exit()
 
     def run(self):
         while True:
