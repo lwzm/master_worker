@@ -89,16 +89,11 @@ def main():
     import random
     import threading
 
-    def _term_self(signum, frame):
-        os.kill(os.getpid(), signal.SIGTERM)
-
     class T(MasterWorker):
         def work(self, cmd):
-            time.sleep(random.random())
+            time.sleep(10)
             exec(cmd)
 
-
-    signal.signal(signal.SIGINT, _term_self)
     T().run()
 
 
