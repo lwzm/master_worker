@@ -51,7 +51,7 @@ class MasterWorker(object):
             while True:
                 if len(self.children) < self.NUM_OF_WORKERS:
                     break
-                time.sleep(0.1)
+                time.sleep(0.01)
 
             cmd = self.get_command()
             if cmd is None:
@@ -77,7 +77,10 @@ class MasterWorker(object):
         subclass should override this
         """
 
-        return input("> ") or None
+        try:
+            return input("> ") or None
+        except EOFError:
+            pass
 
     def work(self, cmd) -> None:
         """Just an example
