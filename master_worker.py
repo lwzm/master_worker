@@ -36,10 +36,13 @@ class MasterWorker(object):
 
     def _sig_term(self, signum, frame):
         signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        self._wait_children()
+        sys.exit()
+
+    def _wait_children(self):
         while self.children:
             pid, status = os.wait()
             self.children.discard(pid)
-        sys.exit()
 
     def run(self):
         gc.disable()
@@ -51,6 +54,10 @@ class MasterWorker(object):
                 time.sleep(0.1)
 
             cmd = self.get_command()
+            if cmd is None:
+                self._wait_children()
+                break
+
             pid = os.fork()
             if pid == 0:  # child
                 signal.signal(signal.SIGCHLD, signal.SIG_DFL)
@@ -70,7 +77,7 @@ class MasterWorker(object):
         subclass should override this
         """
 
-        return input("> ")
+        return input("> ") or None
 
     def work(self, cmd) -> None:
         """Just an example
