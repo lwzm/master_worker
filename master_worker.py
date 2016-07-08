@@ -70,6 +70,7 @@ class MasterWorker(object):
                 sys.exit()
             else:
                 self.children.add(pid)
+                gc.collect()
 
     def init(self):
         pass
