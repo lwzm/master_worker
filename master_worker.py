@@ -16,6 +16,8 @@ class MasterWorker(object):
 
     NUM_OF_WORKERS = 4
     RLIMIT_CPU = 60
+    RLIMIT_AS = 300 * 1024 * 1024
+
 
     def __init__(self):
         self.children = set()
@@ -63,6 +65,7 @@ class MasterWorker(object):
                 signal.signal(signal.SIGCHLD, signal.SIG_DFL)
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 resource.setrlimit(resource.RLIMIT_CPU, (self.RLIMIT_CPU, -1))
+                resource.setrlimit(resource.RLIMIT_AS, (self.RLIMIT_AS, -1))
                 self.work(cmd)
                 sys.exit()
             else:
@@ -97,7 +100,6 @@ def log(*args):
 
 def main():
     import random
-    import threading
 
     class T(MasterWorker):
         def work(self, cmd):
