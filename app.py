@@ -5,7 +5,6 @@ import threading
 import time
 
 import master_worker
-import web
 
 
 class T(master_worker.MasterWorker):
@@ -15,6 +14,6 @@ class T(master_worker.MasterWorker):
 
 
 if __name__ == "__main__":
-    threading.Thread(target=web.run).start()
-    mw = master_worker.instance = T()
-    mw.run()
+    import tornadospy
+    tornadospy.run_in_thread()
+    master_worker.MasterWorker.instance().run()
