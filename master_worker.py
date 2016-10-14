@@ -74,37 +74,37 @@ class MasterWorker(object):
         while loop_flag:
             # loop
             if len(self._children) < self.NUM_OF_WORKERS:
-                self.command = self.get_command()
-                if self.command is None:
+                command = self.get_command()
+                if command is None:
                     loop_flag = False
                 else:
-                    self.fork()
+                    self._fork(command)
 
-            self.select()
+            self._select_and_process()
             # loop
 
         self.clean()
 
     def clean(self):
         while self._selector.get_map():
-            self.select()
+            self._select_and_process()
         self._wait_children()
         self._selector.close()
         self.clear_instance()
 
-    def select(self):
+    def _select_and_process(self):
         events = self._selector.select(0.1)
         for key, _ in events:
             f = key.fileobj
             self._selector.unregister(f)
-            self.command, self.result = pickle.loads(f.read())
+            command, result = pickle.loads(f.read())
             try:
-                self.process_result()
+                self.process_result(command, result)
             except Exception as e:
                 self.log(e)
             f.close()
 
-    def fork(self):
+    def _fork(self, command):
         r, w = os.pipe()
         #print(r, w)
         pid = os.fork()
@@ -116,10 +116,10 @@ class MasterWorker(object):
             resource.setrlimit(resource.RLIMIT_CPU, (self.RLIMIT_CPU, -1))
             resource.setrlimit(resource.RLIMIT_AS, (self.RLIMIT_AS, -1))
             try:
-                result = self.work()
+                result = self.work(command)
             except Exception as e:
                 result = type(e)
-            sender.write(pickle.dumps((self.command, result)))
+            sender.write(pickle.dumps((command, result)))
             sender.close()
             sys.exit()
         else:
@@ -143,7 +143,7 @@ class MasterWorker(object):
         except EOFError:
             pass
 
-    def work(self) -> object:
+    def work(self, command) -> object:
         """Just an example
 
         Subclass should override this
@@ -151,16 +151,16 @@ class MasterWorker(object):
         Returned value must be pickable
         """
 
-        return eval(self.command, None, sys.modules)
+        return eval(command, None, sys.modules)
 
-    def process_result(self) -> None:
+    def process_result(self, command, result) -> None:
         """Just an example
 
         Subclass should override this
         """
 
-        print("command:", self.command)
-        print("result: ", repr(self.result))
+        print("command:", command)
+        print("result: ", repr(result))
 
 
 def main():
