@@ -55,8 +55,7 @@ class MasterWorker(object):
                 break
 
     def _sig_term(self, signum, frame):
-        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-        self._wait_children()
+        self.clean()
         sys.exit()
 
     def _wait_children(self):
@@ -84,7 +83,9 @@ class MasterWorker(object):
             self.select()
             # loop
 
-        # clean
+        self.clean()
+
+    def clean(self):
         while self._selector.get_map():
             self.select()
         self._wait_children()
