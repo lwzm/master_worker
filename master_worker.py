@@ -113,6 +113,9 @@ class MasterWorker(object):
             except Exception as e:
                 self.log(e)
 
+    def cmd__tune_num_of_workers(self, n):
+        self.NUM_OF_WORKERS = int(n)
+
     def clean(self):
         while self._selector.get_map():
             self._select_and_process()
@@ -204,8 +207,6 @@ def main():
             time.sleep(random.randint(1, 5))
         def cmd__test(self):
             print(self)
-        def cmd__tune_num_of_workers(self, n):
-            self.NUM_OF_WORKERS = int(n)
 
     T.instance().run()
 
