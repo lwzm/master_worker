@@ -89,7 +89,11 @@ class MasterWorker(object):
         while loop_flag:
             # loop
             if len(self._children) < self.NUM_OF_WORKERS:
-                command = self.get_command()
+                try:
+                    command = self.get_command()
+                except Exception as e:
+                    self.log(e)
+                    command = None
                 if command is None:
                     loop_flag = False
                 else:
@@ -128,12 +132,15 @@ class MasterWorker(object):
         for key, _ in events:
             f = key.fileobj
             self._selector.unregister(f)
-            command, result = pickle.loads(f.read())
+            data = f.read()
+            f.close()
+            if not data:  # error occurs?
+                continue
+            command, result = pickle.loads(data)
             try:
                 self.process_result(command, result)
             except Exception as e:
                 self.log(e)
-            f.close()
 
     def _fork(self, command):
         r, w = os.pipe()
