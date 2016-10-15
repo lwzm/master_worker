@@ -5,12 +5,26 @@ import contextlib
 import datetime
 import gc
 import os
+import pathlib
 import pickle
 import resource
 import selectors
 import signal
 import sys
 import time
+import threading
+
+
+def _fifo(name):
+    with contextlib.suppress(FileExistsError):
+        os.mkfifo(name)
+    p = pathlib.Path(name)
+    assert p.is_fifo()
+    def w():
+        with p.open("w"):
+            pass
+    threading.Thread(target=w).start()  # prevent blocking
+    return p.open()
 
 
 class MasterWorker(object):
@@ -27,6 +41,7 @@ class MasterWorker(object):
             raise ValueError(self)
         self._children = set()
         self._selector = selectors.SelectSelector()
+        self._foo = _fifo(".pipe." + type(self).__name__)
         signal.signal(signal.SIGCHLD, self._sig_chld)
         signal.signal(signal.SIGTERM, self._sig_term)
 
@@ -81,9 +96,22 @@ class MasterWorker(object):
                     self._fork(command)
 
             self._select_and_process()
+            self._have_a_rest()
             # loop
 
         self.clean()
+
+    def _have_a_rest(self):
+        text = self._foo.read()
+        if not text:
+            return
+        cmd, *args = text.split()
+        cmd = getattr(self, "cmd__{}".format(cmd), None)
+        if cmd:
+            try:
+                cmd(*args)
+            except Exception as e:
+                self.log(e)
 
     def clean(self):
         while self._selector.get_map():
@@ -109,6 +137,7 @@ class MasterWorker(object):
         #print(r, w)
         pid = os.fork()
         if pid == 0:  # child
+            self._foo.close()
             os.close(r)
             sender = os.fdopen(w, "wb")
             signal.signal(signal.SIGCHLD, signal.SIG_DFL)
@@ -164,7 +193,21 @@ class MasterWorker(object):
 
 
 def main():
-    MasterWorker.instance().run()
+    import random
+
+    class T(MasterWorker):
+        NUM_OF_WORKERS = 1
+        def get_command(self):
+            return time.time()
+        def work(self, command) -> object:
+            print(command)
+            time.sleep(random.randint(1, 5))
+        def cmd__test(self):
+            print(self)
+        def cmd__tune_num_of_workers(self, n):
+            self.NUM_OF_WORKERS = int(n)
+
+    T.instance().run()
 
 
 if __name__ == "__main__":
