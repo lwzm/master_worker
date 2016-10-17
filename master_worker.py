@@ -48,6 +48,7 @@ class MasterWorker(object):
         self._writer_lock = multiprocessing.Lock()
         self._struct_msg_header = struct.Struct("!I")
         self._foo = _fifo(".pipe." + type(self).__name__)
+        self._loop_flag = False
         signal.signal(signal.SIGCHLD, self._sig_chld)
         signal.signal(signal.SIGTERM, self._sig_term)
 
@@ -76,8 +77,7 @@ class MasterWorker(object):
                 break
 
     def _sig_term(self, signum, frame):
-        self.clean()
-        sys.exit()
+        self._loop_flag = False
 
     def log(self, x):
         print(datetime.datetime.now(), x, file=sys.stderr, flush=True)
@@ -86,8 +86,8 @@ class MasterWorker(object):
         self.init()
         gc.disable()
 
-        loop_flag = True
-        while loop_flag:
+        self._loop_flag = True
+        while self._loop_flag:
             # loop
             if len(self._children) < self.NUM_OF_WORKERS:
                 try:
@@ -96,7 +96,7 @@ class MasterWorker(object):
                     self.log(e)
                     command = None
                 if command is None:
-                    loop_flag = False
+                    self._loop_flag = False
                 else:
                     self._fork(command)
 
@@ -163,6 +163,7 @@ class MasterWorker(object):
         pid = os.fork()
         if pid == 0:  # child
             self._foo.close()
+            self._reader.close()
             signal.signal(signal.SIGCHLD, signal.SIG_DFL)
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             resource.setrlimit(resource.RLIMIT_CPU, (self.RLIMIT_CPU, -1))
