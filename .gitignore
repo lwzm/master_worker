@@ -1,0 +1,7 @@
+.*
+*.log
+_*
+?
+__pycache__
+build
+dist
