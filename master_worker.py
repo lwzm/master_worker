@@ -39,6 +39,8 @@ class MasterWorker(object):
         signal.signal(signal.SIGCHLD, self._sig_chld)
         signal.signal(signal.SIGUSR1, self._sig_usr1)
         signal.signal(signal.SIGTERM, self._sig_term)
+        with open(".{}.pid".format(type(self).__name__), "w") as f:
+            f.write(str(os.getpid()))
 
     @classmethod
     def instance(cls):
@@ -68,15 +70,15 @@ class MasterWorker(object):
         self._loop_flag = False
 
     def _sig_usr1(self, signum, frame):
-        with open(".cmd") as f:
-            text = f.read()
-        cmd, *args = text.split()
-        cmd = getattr(self, "cmd__{}".format(cmd), None)
-        if cmd:
-            try:
+        try:
+            with open(".cmd") as f:
+                text = f.read()
+            cmd, *args = text.split()
+            cmd = getattr(self, "cmd__{}".format(cmd), None)
+            if cmd:
                 cmd(*args)
-            except Exception as e:
-                self.log(e)
+        except Exception as e:
+            self.log(e)
 
     def log(self, x):
         print(datetime.datetime.now(), x, file=sys.stderr, flush=True)
