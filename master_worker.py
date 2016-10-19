@@ -152,6 +152,7 @@ class MasterWorker(object):
         if pid == 0:  # child
             self._reader.close()
             signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+            signal.signal(signal.SIGUSR1, signal.SIG_DFL)
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             resource.setrlimit(resource.RLIMIT_CPU, (self.RLIMIT_CPU, -1))
             resource.setrlimit(resource.RLIMIT_AS, (self.RLIMIT_AS, -1))
