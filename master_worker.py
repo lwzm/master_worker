@@ -25,6 +25,9 @@ class MasterWorker(object):
     NUM_OF_WORKERS = 2
     RLIMIT_CPU = 60
     RLIMIT_AS = 300 * 1024 * 1024
+
+    _TIMEOUT = 0.01
+
     _lock = True
 
     def __init__(self):
@@ -32,7 +35,7 @@ class MasterWorker(object):
             raise ValueError(self)
         self._children = set()
         self._reader, self._writer = socket.socketpair()
-        self._reader.settimeout(0.01)
+        self._reader.settimeout(self._TIMEOUT)
         self._writer_lock = multiprocessing.Lock()
         self._struct_msg_header = struct.Struct("!I")
         self._loop_flag = False
@@ -122,7 +125,8 @@ class MasterWorker(object):
             rest = self._struct_msg_header.size - len(header)
             if not rest:
                 break
-            header += self._reader.recv(rest)
+            header += self._reader.recv(rest)  # raise timeout often at here
+            self._reader.settimeout(None)
 
         size, = self._struct_msg_header.unpack(header)
 
@@ -133,6 +137,7 @@ class MasterWorker(object):
                 break
             body += self._reader.recv(rest)
 
+        self._reader.settimeout(self._TIMEOUT)
         return body
 
     def _recv_and_proc(self):
