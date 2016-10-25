@@ -33,7 +33,7 @@ class MasterWorker(object):
     def __init__(self):
         if self._lock:
             raise ValueError(self)
-        self._children = set()
+        self._children = {}
         self._reader, self._writer = socket.socketpair()
         self._reader.settimeout(self._TIMEOUT)
         self._writer_lock = multiprocessing.Lock()
@@ -65,7 +65,7 @@ class MasterWorker(object):
                 if pid == 0:
                     break
                 exit_status, signal_number = status.to_bytes(2, "big")
-                self._children.discard(pid)
+                self._children.pop(pid, None)
             except ChildProcessError:
                 break
 
@@ -172,7 +172,7 @@ class MasterWorker(object):
             self._writer.close()
             sys.exit()
         else:
-            self._children.add(pid)
+            self._children[pid] = command
             gc.collect()
 
     def init(self):
