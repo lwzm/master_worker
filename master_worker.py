@@ -117,6 +117,7 @@ class MasterWorker(object):
             self._recv_and_proc()
         self._reader.close()
         self._writer.close()
+        self.exit()
         self.clear_instance()
 
     def _recv(self):
@@ -175,6 +176,9 @@ class MasterWorker(object):
             gc.collect()
 
     def init(self):
+        pass
+
+    def exit(self):
         pass
 
     def get_command(self) -> object:
