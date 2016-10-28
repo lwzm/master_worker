@@ -58,6 +58,17 @@ class MasterWorker(object):
         if hasattr(cls, "_instance"):
             del cls._instance
 
+    @property
+    def children(self):
+        info = []
+        for pid, (command, start) in self._children.items():
+            info.append({
+                "pid": pid,
+                "command": command,
+                "start": start,
+            })
+        return info
+
     def _sig_chld(self, signum, frame):
         while True:
             try:
@@ -172,7 +183,7 @@ class MasterWorker(object):
             self._writer.close()
             sys.exit()
         else:
-            self._children[pid] = command
+            self._children[pid] = (command, datetime.datetime.now())
             gc.collect()
 
     def init(self):
@@ -220,11 +231,11 @@ def main():
         def get_command(self):
             return time.time()
         def work(self, command) -> object:
-            print(command)
-            time.sleep(random.random() * 10)
+            time.sleep(0.5)
             return command, os.getpid()
         def cmd__test(self):
             print(self)
+            print(self.children)
 
     T.instance().run()
 
