@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
 
-import collections
-import contextlib
 import datetime
 import gc
 import os
-import pathlib
 import pickle
 import resource
-import selectors
 import signal
 import struct
 import socket
 import multiprocessing
 import sys
 import time
-import threading
 
 
 class MasterWorker(object):
@@ -179,7 +174,8 @@ class MasterWorker(object):
                 result = type(e)
             msg = pickle.dumps((command, result))
             with self._writer_lock:
-                self._writer.sendall(self._struct_msg_header.pack(len(msg)) + msg)
+                self._writer.sendall(
+                    self._struct_msg_header.pack(len(msg)) + msg)
             self._writer.close()
             sys.exit()
         else:
@@ -224,15 +220,17 @@ class MasterWorker(object):
 
 
 def main():
-    import random
 
     class T(MasterWorker):
         NUM_OF_WORKERS = 1
+
         def get_command(self):
             return time.time()
+
         def work(self, command) -> object:
             time.sleep(0.5)
             return command, os.getpid()
+
         def cmd__test(self):
             print(self)
             print(self.children)
