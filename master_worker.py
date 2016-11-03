@@ -33,7 +33,7 @@ class MasterWorker(object):
         self._reader.settimeout(self._TIMEOUT)
         self._writer_lock = multiprocessing.Lock()
         self._struct_msg_header = struct.Struct("!I")
-        self._loop_flag = False
+        self.loop_flag = False
         signal.signal(signal.SIGCHLD, self._sig_chld)
         signal.signal(signal.SIGUSR1, self._sig_usr1)
         signal.signal(signal.SIGTERM, self._sig_term)
@@ -76,7 +76,7 @@ class MasterWorker(object):
                 break
 
     def _sig_term(self, signum, frame):
-        self._loop_flag = False
+        self.loop_flag = False
 
     def _sig_usr1(self, signum, frame):
         try:
@@ -96,8 +96,8 @@ class MasterWorker(object):
         self.init()
         gc.disable()
 
-        self._loop_flag = True
-        while self._loop_flag:
+        self.loop_flag = True
+        while self.loop_flag:
             # loop
             if len(self._children) < self.NUM_OF_WORKERS:
                 try:
@@ -106,7 +106,7 @@ class MasterWorker(object):
                     self.log(e)
                     command = None
                 if command is None:
-                    self._loop_flag = False
+                    self.loop_flag = False
                 else:
                     self._fork(command)
 
