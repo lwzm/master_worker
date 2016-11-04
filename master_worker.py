@@ -40,6 +40,9 @@ class MasterWorker(object):
         with open(".{}.pid".format(type(self).__name__), "w") as f:
             f.write(str(os.getpid()))
 
+    def __contains__(self, key):
+        return key in self._children
+
     @classmethod
     def instance(cls):
         if not hasattr(cls, "_instance"):
