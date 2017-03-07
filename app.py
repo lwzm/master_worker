@@ -13,5 +13,5 @@ class T(master_worker.MasterWorker):
 
 if __name__ == "__main__":
     import tornadospy
-    tornadospy.run_in_thread()
-    T.instance().run()
+    with tornadospy.env:
+        T.instance().run()
